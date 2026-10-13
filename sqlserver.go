@@ -83,21 +83,21 @@ func (dialector Dialector) ClauseBuilders() map[string]clause.ClauseBuilder {
 							builder.WriteString("ORDER BY (SELECT NULL) ")
 						}
 					}
-				}
 
-				if limit.Offset > 0 {
-					builder.WriteString("OFFSET ")
-					builder.WriteString(strconv.Itoa(limit.Offset))
-					builder.WriteString(" ROWS")
-				}
-
-				if limit.Limit != nil && *limit.Limit >= 0 {
-					if limit.Offset == 0 {
-						builder.WriteString("OFFSET 0 ROW")
+					if limit.Offset > 0 {
+						builder.WriteString("OFFSET ")
+						builder.WriteString(strconv.Itoa(limit.Offset))
+						builder.WriteString(" ROWS")
 					}
-					builder.WriteString(" FETCH NEXT ")
-					builder.WriteString(strconv.Itoa(*limit.Limit))
-					builder.WriteString(" ROWS ONLY")
+
+					if limit.Limit != nil && *limit.Limit >= 0 {
+						if limit.Offset == 0 {
+							builder.WriteString("OFFSET 0 ROW")
+						}
+						builder.WriteString(" FETCH NEXT ")
+						builder.WriteString(strconv.Itoa(*limit.Limit))
+						builder.WriteString(" ROWS ONLY")
+					}
 				}
 			}
 		},
@@ -182,18 +182,6 @@ func (dialector Dialector) Explain(sql string, vars ...interface{}) string {
 }
 
 func (dialector Dialector) DataTypeOf(field *schema.Field) string {
-	// Computed (generated) column. SQL Server uses `AS (expr) PERSISTED` (the
-	// column type is inferred from the expression, so it is omitted). The
-	// expression is carried by the `generated` tag, separate from the type.
-	// https://learn.microsoft.com/en-us/sql/relational-databases/tables/specify-computed-columns-in-a-table
-	if expr, ok := generatedColumnExpr(field); ok {
-		return "AS (" + expr + ") PERSISTED"
-	}
-
-	return dialector.dataTypeOf(field)
-}
-
-func (dialector Dialector) dataTypeOf(field *schema.Field) string {
 	switch field.DataType {
 	case schema.Bool:
 		return "bit"
