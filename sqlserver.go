@@ -88,6 +88,13 @@ func (dialector Dialector) supportsOffsetFetch() bool {
 	return dialector.serverMajorVersion >= 11
 }
 
+func (dialector Dialector) supportsDropTableIfExists() bool {
+	if !dialector.hasServerVersion {
+		return true
+	}
+	return dialector.serverMajorVersion >= 13
+}
+
 func (dialector Dialector) detectServerVersion(db *gorm.DB) error {
 	if db == nil || db.ConnPool == nil {
 		return nil

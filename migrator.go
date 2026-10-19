@@ -154,7 +154,12 @@ func (m Migrator) DropTable(values ...interface{}) error {
 			}
 
 			if err == nil {
-				err = tx.Exec("DROP TABLE IF EXISTS ?", clause.Table{Name: stmt.Table}).Error
+				if m.Dialector.(Dialector).supportsDropTableIfExists() {
+					err = tx.Exec("DROP TABLE IF EXISTS ?", clause.Table{Name: stmt.Table}).Error
+				} else {
+					err = tx.Exec("IF OBJECT_ID(N'?', N'U') IS NOT NULL DROP TABLE ?",
+						getFullQualifiedTableName(stmt), clause.Table{Name: stmt.Table}).Error
+				}
 			}
 
 			return err
